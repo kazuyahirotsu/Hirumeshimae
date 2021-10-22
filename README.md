@@ -8,7 +8,7 @@ https://backlog.com/ja/git-tutorial/
 作業ディレクトリの移動
 
 ```
-$ cd webapp_team4
+$ cd Hirumeshimae
 ```
 
 webapp_team4ディレクトリ上で

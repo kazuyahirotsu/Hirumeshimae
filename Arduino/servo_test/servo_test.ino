@@ -68,7 +68,6 @@ void setup() {
 }
 
 void loop() {
-
 	for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
 		// in steps of 1 degree
 		myservo01.write(pos);    // tell servo to go to position in variable 'pos'

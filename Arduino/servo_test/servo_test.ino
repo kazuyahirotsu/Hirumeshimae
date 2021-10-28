@@ -40,14 +40,14 @@
 
 Servo myservo01;// create servo object to control a servo
 Servo myservo02;
-//Servo myservo03;
+Servo myservo03;
 // 16 servo objects can be created on the ESP32
 
 int pos = 0;    // variable to store the servo position
 // Recommended PWM GPIO pins on the ESP32 include 2,4,12-19,21-23,25-27,32-33 
 int servoPin = 2;
-int servoPin02 = 0;
-//int servoPin03 = @@;
+int servoPin02 = 16;
+int servoPin03 = 17;
 
 void setup() {
   Serial.begin(38400);
@@ -58,10 +58,10 @@ void setup() {
 	ESP32PWM::allocateTimer(3);
 	myservo01.setPeriodHertz(50);    // standard 50 hz servo
   myservo02.setPeriodHertz(50);
-  //myservo03.setPeriodHertz(50);
+  myservo03.setPeriodHertz(50);
 	myservo01.attach(servoPin, 1000, 2000); // attaches the servo on pin 18 to the servo object
 	myservo02.attach(servoPin02, 1000, 2000);
-	//myservo03.attach(servoPin03, 1000, 2000);
+	myservo03.attach(servoPin03, 1000, 2000);
 	// using default min/max of 1000us and 2000us
 	// different servos may require different min/max settings
 	// for an accurate 0 to 180 sweep
@@ -73,14 +73,14 @@ void loop() {
 		// in steps of 1 degree
 		myservo01.write(pos);    // tell servo to go to position in variable 'pos'
     myservo02.write(pos);
-    //myservo03.write(pos);
+    myservo03.write(pos);
 		Serial.println(pos);
 		delay(15);             // waits 15ms for the servo to reach the position
 	}
 	for (pos = 180; pos >= 0; pos -= 1) { // goes from 180 degrees to 0 degrees
 		myservo01.write(pos);    // tell servo to go to position in variable 'pos'
     myservo02.write(pos);
-    //myservo03.write(pos);
+    myservo03.write(pos);
 		delay(15);             // waits 15ms for the servo to reach the position
 	}
 }

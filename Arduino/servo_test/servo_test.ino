@@ -48,7 +48,7 @@ int pos = 0;    // variable to store the servo position
 int servoPin = 2;
 int servoPin02 = 16;
 int servoPin03 = 17;
-
+void advance(float speed);
 void setup() {
   Serial.begin(38400);
 	// Allow allocation of all timers
@@ -67,19 +67,23 @@ void setup() {
 	// for an accurate 0 to 180 sweep
 }
 
+void advance(float speed){
+  int adv;
+  adv = speed*400 + 1500;
+  if(speed > 0) adv += 25;
+  else if(speed < 0) adv -= 25;
+  else adv = 1500;
+  
+  adv = min(max(adv,1100),1900);
+  myservo01.writeMicroseconds(adv);
+  myservo02.writeMicroseconds(adv);
+  myservo03.writeMicroseconds(adv);
+}
+
 void loop() {
-	for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
-		// in steps of 1 degree
-		myservo01.write(pos);    // tell servo to go to position in variable 'pos'
-    myservo02.write(pos);
-    myservo03.write(pos);
-		Serial.println(pos);
-		delay(15);             // waits 15ms for the servo to reach the position
-	}
-	for (pos = 180; pos >= 0; pos -= 1) { // goes from 180 degrees to 0 degrees
-		myservo01.write(pos);    // tell servo to go to position in variable 'pos'
-    myservo02.write(pos);
-    myservo03.write(pos);
-		delay(15);             // waits 15ms for the servo to reach the position
-	}
+  int time = millis();
+  Serial.println(time);
+
+  delay(10); // 1秒おきに送信
+	advance(0.1*sin(time/1000));
 }

@@ -1,42 +1,29 @@
-/* Sweep
- by BARRAGAN <http://barraganstudio.com>
- This example code is in the public domain.
 
- modified 8 Nov 2013
- by Scott Fitzgerald
-
- modified for the ESP32 on March 2017
- by John Bennett
-
- see http://www.arduino.cc/en/Tutorial/Sweep for a description of the original code
-
- * Different servos require different pulse widths to vary servo angle, but the range is 
- * an approximately 500-2500 microsecond pulse every 20ms (50Hz). In general, hobbyist servos
- * sweep 180 degrees, so the lowest number in the published range for a particular servo
- * represents an angle of 0 degrees, the middle of the range represents 90 degrees, and the top
- * of the range represents 180 degrees. So for example, if the range is 1000us to 2000us,
- * 1000us would equal an angle of 0, 1500us would equal 90 degrees, and 2000us would equal 1800
- * degrees.
- * 
- * Circuit: (using an ESP32 Thing from Sparkfun)
- * Servo motors have three wires: power, ground, and signal. The power wire is typically red,
- * the ground wire is typically black or brown, and the signal wire is typically yellow,
- * orange or white. Since the ESP32 can supply limited current at only 3.3V, and servos draw
- * considerable power, we will connect servo power to the VBat pin of the ESP32 (located
- * near the USB connector). THIS IS ONLY APPROPRIATE FOR SMALL SERVOS. 
- * 
- * We could also connect servo power to a separate external
- * power source (as long as we connect all of the grounds (ESP32, servo, and external power).
- * In this example, we just connect ESP32 ground to servo ground. The servo signal pins
- * connect to any available GPIO pins on the ESP32 (in this example, we use pin 18.
- * 
- * In this example, we assume a Tower Pro MG995 large servo connected to an external power source.
- * The published min and max for this servo is 1000 and 2000, respectively, so the defaults are fine.
- * These values actually drive the servos a little past 0 and 180, so
- * if you are particular, adjust the min and max values to match your needs.
- */
-
+#include <WiFi.h>
 #include <ESP32Servo.h>
+
+const char ssid[] = "ESP32AP-WiFi";
+const char pass[] = "esp32apwifi";
+const IPAddress ip(192,168,30,3);
+const IPAddress subnet(255,255,255,0);
+
+const char html[] =
+"<!DOCTYPE html><html lang='ja'><head><meta charset='UTF-8'>\
+<style>input {margin:8px;width:80px;}\
+div {font-size:16pt;color:red;text-align:center;width:400px;border:groove 40px orange;}</style>\
+<title>WiFi_Car Controller</title></head>\
+<body><div><p>Tank Controller</p>\
+<form method='get'>\
+<input type='submit' name='le' value='左' />\
+<input type='submit' name='fo' value='前' />\
+<input type='submit' name='ri' value='右' /><br>\
+<input type='submit' name='st' value='停止' /><br>\
+<input type='submit' name='bl' value='後左' />\
+<input type='submit' name='ba' value='後ろ' />\
+<input type='submit' name='br' value='後右' /><br><br>\
+</form></div></body></html>";
+
+WiFiServer server(80);
 
 Servo myservo01;// create servo object to control a servo
 Servo myservo02;
@@ -51,6 +38,11 @@ int servoPin03 = 17;
 void advance(float speed);
 void setup() {
   Serial.begin(38400);
+  WiFi.softAP(ssid,pass);
+  delay(100);
+  WiFi.softAPConfig(ip,ip,subnet);
+
+  IPAddress myIP = WiFi.softAPIP();
 	// Allow allocation of all timers
 	ESP32PWM::allocateTimer(0);
 	ESP32PWM::allocateTimer(1);
@@ -65,6 +57,11 @@ void setup() {
 	// using default min/max of 1000us and 2000us
 	// different servos may require different min/max settings
 	// for an accurate 0 to 180 sweep
+  Serial.print("SSID: ");
+  Serial.println(ssid);
+  Serial.print("AP IP address: ");
+  Serial.println(myIP);
+  Serial.println("Server start!");
 }
 
 void advance(float speed){
@@ -81,9 +78,45 @@ void advance(float speed){
 }
 
 void loop() {
-  int time = millis();
-  Serial.println(time);
+   WiFiClient client = server.available();
+   Serial.println(client);
+    if (client) {
+        String currentLine = "";
+        Serial.println("New Client.");
 
-  delay(10); // 1秒おきに送信
-	advance(0.1*sin(time/1000));
+        while (client.connected()) {
+            if (client.available()) {
+                char c = client.read();
+                Serial.write(c);
+                if (c == '\n') {
+                    if (currentLine.length() == 0) {
+                        client.println("HTTP/1.1 200 OK");
+                        client.println("Content-type:text/html");
+                        client.println();
+
+                        client.print(html);
+                        client.println();
+                        break;
+                    } else {
+                        currentLine = "";
+                    }
+                } else if (c != '\r') {
+                    currentLine += c;
+                }
+
+                if (currentLine.endsWith("GET /?fo")) {
+                    advance(0.3);
+                    
+                }
+               
+                if (currentLine.endsWith("GET /?ba")) {
+                    advance(-0.3);
+
+                }
+            }
+        }
+        client.stop();
+        Serial.println("Client Disconnected.");
+    }
+    delay(1000);
 }

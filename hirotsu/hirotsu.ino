@@ -33,6 +33,12 @@ void movemotor(float forward, float side, float rotate);
 int for_offset = 25;
 int back_offset = 35;
 
+//gripper
+Servo gripperServo;
+int gripperServoPin = 13;
+int closedPos = 90;
+int openPos = 0;
+
 //huskylens
 #include "HUSKYLENS.h"
 #include "SoftwareSerial.h"
@@ -44,6 +50,14 @@ int id1_center = -1;
 int id2_center = -1;
 int previousCenter = 160;
 int center = 160;
+
+//ultrasonic sensor
+#include <math.h>
+int trigPin = 32;
+int echoPin = 33;
+int duration;
+float distance;
+bool success = false;
 
 //get time
 long currentTime;
@@ -74,6 +88,15 @@ void setup() {
   myservo02.attach(servoPin02, 1000, 2000);
   myservo03.attach(servoPin03, 1000, 2000);
   movemotor(0,0,0);
+
+  //gripper
+  gripperServo.attach(gripperServoPin);
+  gripperServo.write(openPos);
+
+  //ultrasonic sensor
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+
 }
 
 
@@ -152,12 +175,41 @@ void loop() {
         Serial.println("rotate clockwise");
         movemotor(0,0,0.1);
       }
-      
     }
-  }
+
+    //docking
+    distance = getFarDistance();
+    if(distance < 5 && success == false){
+      gripperServo.write(closedPos);
+      Serial.println("gripperclose");
+      delay(500);
+      distance = getFarDistance();
+      if(distance < 5){
+        gripperServo.write(openPos);
+        Serial.println("gripperopen");
+      }else{
+        delay(9500);
+        gripperServo.write(openPos);
+        Serial.println("gripperopen2");
+        success = true;
+      }
+      delay(100);
+    }
+  }  
 }
 
-
+int getFarDistance(){
+  digitalWrite(trigPin,LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin,HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin,LOW);
+  duration = pulseIn(echoPin,HIGH);
+  distance = duration * 0.034/2;
+  Serial.print("distance ");
+  Serial.println(distance);
+  return distance;
+}
 
 int whereIsCenter(int id1_center, int id2_center, int previousCenter){
   int currentCenter;
@@ -203,7 +255,7 @@ void movemotor(float forward, float side, float rotate) {
     servo3speed = servo3speed*0.5;
     servo2speed = servo2speed*0.5;
   }
-  speed2pwm(servo1speed, 1);
-  speed2pwm(servo2speed, 2);
-  speed2pwm(servo3speed, 3);
+  speed2pwm(servo1speed, 3);
+  speed2pwm(servo2speed, 1);
+  speed2pwm(servo3speed, 2);
 }

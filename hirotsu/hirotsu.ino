@@ -105,6 +105,7 @@ void loop() {
   Serial.println(currentTime-lastGetTime);
   
   //start when switch is on, stop when switch is off
+  //use movemotor only inside this
   if(start == 1){
     
     //check if the ship is lost
@@ -113,11 +114,28 @@ void loop() {
       //to be coded
       Serial.println("I'm lost");
       Serial.println(String()+F("previousCenter:")+previousCenter);
+      
+      if(previousCenter < 160){
+        //rotate counterclockwise if the tag disappeared in the left side
+        Serial.println("rotate counterclockwise to get back");
+      }else{
+        //rotate clockwise if the tag disappeared in the right side
+        Serial.println("rotate clockwise to get back");
+      }
+      
     }else{
-      //if not lost, turn or forward to the tag
+      //if not lost, rotate or forward to the tag
       center = whereIsCenter(id1_center,id2_center,previousCenter);
       previousCenter = center;
       Serial.println(String()+F("center:")+center);
+      
+      if(150 < center && center < 170){
+        Serial.println("go forward");
+      }else if(center <= 150){
+        Serial.println("rotate counterclockwise");
+      }else{
+        Serial.println("rotate clockwise");
+      }
       
     }
   }

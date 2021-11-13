@@ -43,7 +43,7 @@ int openPos = 0;
 #include "HUSKYLENS.h"
 #include "SoftwareSerial.h"
 HUSKYLENS huskylens;
-SoftwareSerial mySerial(21, 22); // RX, TX
+SoftwareSerial mySerial(26, 27); // RX, TX
 //HUSKYLENS green line >> Pin 21; blue line >> Pin 22
 int whereIsCenter(int id1_center, int id2_center, int previousCenter);
 int id1_center = -1;
@@ -57,6 +57,14 @@ int trigPin = 32;
 int echoPin = 33;
 int duration;
 float distance;
+
+//laser sensor
+#include <Wire.h>
+#include<VL53L0X.h>
+VL53L0X laserSensor;
+int laserDistance;
+
+//docking
 bool success = false;
 
 //get time
@@ -92,10 +100,21 @@ void setup() {
   //gripper
   gripperServo.attach(gripperServoPin);
   gripperServo.write(openPos);
+  delay(100);
 
   //ultrasonic sensor
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
+
+  //laser sensor
+  Wire.begin(SDA, SCL);
+  laserSensor.setTimeout(500);
+  if (!laserSensor.init())
+  {
+    Serial.println("Failed to detect and initialize sensor!");
+    while (1) {}
+  }
+  laserSensor.startContinuous();
 
 }
 
@@ -134,7 +153,7 @@ void loop() {
   }
 
   //debug
-  Serial.println(String()+F("id2:")+id1_center+F("id1:")+id2_center);
+  Serial.println(String()+F("id1:")+id1_center+F("  id2:")+id2_center);
   //Serial.println(String()+currentTime+F("and")+lastGetTime);
   //Serial.println(currentTime-lastGetTime);
   
@@ -165,10 +184,10 @@ void loop() {
       previousCenter = center;
       Serial.println(String()+F("center:")+center);
       
-      if(150 < center && center < 170){
+      if(140 < center && center < 180){
         Serial.println("go forward");
         movemotor(0.1,0,0);
-      }else if(center <= 150){
+      }else if(center <= 140){
         Serial.println("rotate counterclockwise");
         movemotor(0,0,-0.1);
       }else{
@@ -182,18 +201,23 @@ void loop() {
     if(distance < 5 && success == false){
       gripperServo.write(closedPos);
       Serial.println("gripperclose");
-      delay(500);
-      distance = getFarDistance();
-      if(distance < 5){
+      delay(1000);
+      laserDistance = laserSensor.readRangeContinuousMillimeters();
+      
+      if(laserDistance > 100){
+        //unsuccessful docking
         gripperServo.write(openPos);
+        delay(1000);
         Serial.println("gripperopen");
+        
       }else{
-        delay(9500);
+        //successful docking
+        delay(9000);
         gripperServo.write(openPos);
+        delay(1000);
         Serial.println("gripperopen2");
         success = true;
       }
-      delay(100);
     }
   }  
 }

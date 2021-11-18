@@ -44,7 +44,7 @@ int openPos = 0;
 #include "SoftwareSerial.h"
 HUSKYLENS huskylens;
 SoftwareSerial mySerial(26, 27); // RX, TX
-//HUSKYLENS green line >> Pin 21; blue line >> Pin 22
+//HUSKYLENS green line >> Pin 26; blue line >> Pin 27
 int whereIsCenter(int id1_center, int id2_center, int previousCenter);
 int id1_center = -1;
 int id2_center = -1;
@@ -58,7 +58,7 @@ int echoPin = 33;
 int duration;
 float distance;
 
-//laser sensor
+//laser sensor SDA:21 SDL:22
 #include <Wire.h>
 #include<VL53L0X.h>
 VL53L0X laserSensor;
@@ -202,7 +202,8 @@ void loop() {
       gripperServo.write(closedPos);
       Serial.println("gripperclose");
       delay(1000);
-      laserDistance = laserSensor.readRangeContinuousMillimeters();
+      //laserDistance = laserSensor.readRangeContinuousMillimeters();
+      laserDistance = getFarDistance();
       
       if(laserDistance > 100){
         //unsuccessful docking

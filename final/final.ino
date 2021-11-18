@@ -70,9 +70,11 @@ bool success = false;
 //get time
 long currentTime;
 long lastGetTime;
+long setupTime;
 
 void setup() {
   Serial.begin(115200);
+  setupTime = millis();
 
   //huskylens
   mySerial.begin(9600);
@@ -128,7 +130,7 @@ void loop() {
   Serial.println(String()+"start:"+start);
   //get time
   currentTime = millis();
-  
+    
   //initialize everytime in case tag didn't detected
   id1_center = -1;
   id2_center = -1;
@@ -159,9 +161,15 @@ void loop() {
   
   //start when switch is on, stop when switch is off
   //use movemotor only inside this
+  
   if(start == 1){
-    
     //check if the ship is lost
+    if((currentTime-setupTime)%30000 == 0 || (currentTime-setupTime)%30000 == 1 || (currentTime-setupTime)%30000 == 2){
+      movemotor(-0.1,0,0);
+      Serial.println("backing");
+      delay(5               00);
+      currentTime = millis();
+    }
     if(currentTime-lastGetTime > 10 && start == 1){
       //if the ship is lost, turn the other way as the last turn untill it finds the tag
       //to be coded
@@ -184,33 +192,37 @@ void loop() {
       previousCenter = center;
       Serial.println(String()+F("center:")+center);
       
-      if(140 < center && center < 180){
+      if(100 < center && center < 220){
         Serial.println("go forward");
-        movemotor(0.1,0,0);
-      }else if(center <= 140){
+        movemotor(0.05,0,0);
+      }else if(center <= 100){
         Serial.println("rotate counterclockwise");
-        movemotor(0,0,-0.1);
+        movemotor(0,0,-0.05);
       }else{
         Serial.println("rotate clockwise");
-        movemotor(0,0,0.1);
+        movemotor(0,0,0.05);
       }
     }
 
     //docking
-    distance = getFarDistance();
-    if(distance < 5 && success == false){
+    //distance = getFarDistance();
+    distance = laserSensor.readRangeContinuousMillimeters();
+    Serial.println(distance);
+    if(distance < 50){
       gripperServo.write(closedPos);
       Serial.println("gripperclose");
       delay(1000);
-      //laserDistance = laserSensor.readRangeContinuousMillimeters();
-      laserDistance = getFarDistance();
+      laserDistance = laserSensor.readRangeContinuousMillimeters();
+      //laserDistance = getFarDistance();
       
-      if(laserDistance > 100){
+      if(laserDistance > 50){
         //unsuccessful docking
         gripperServo.write(openPos);
         delay(1000);
         Serial.println("gripperopen");
-        
+        movemotor(-0.1,0,0);
+        Serial.println("backing");
+        delay(500);
       }else{
         //successful docking
         delay(9000);
@@ -218,9 +230,17 @@ void loop() {
         delay(1000);
         Serial.println("gripperopen2");
         success = true;
+        movemotor(-0.1,0,0);
+        Serial.println("backing");
+        delay(500);
       }
     }
-  }  
+  }else{
+    movemotor(0,0,0);
+    gripperServo.write(openPos);
+    Serial.println("gripperopen");
+    delay(500);
+  }
 }
 
 int getFarDistance(){
@@ -280,7 +300,7 @@ void movemotor(float forward, float side, float rotate) {
     servo3speed = servo3speed*0.5;
     servo2speed = servo2speed*0.5;
   }
-  speed2pwm(servo1speed, 3);
-  speed2pwm(servo2speed, 1);
-  speed2pwm(servo3speed, 2);
+  speed2pwm(servo1speed, 1);
+  speed2pwm(servo2speed, 2);
+  speed2pwm(servo3speed, 3);
 }

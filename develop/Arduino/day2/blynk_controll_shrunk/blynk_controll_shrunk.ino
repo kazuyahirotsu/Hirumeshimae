@@ -144,11 +144,7 @@ void loop()
     forward(value_right,3);
   }
 }
-​
-void keep_center(argument){
-  
-}
-​
+
 void forward(float speed, int servo_num){//servo_num = 1,2,or 3
   int adv;
   Servo s[3] = {myservo01, myservo02, myservo03};
